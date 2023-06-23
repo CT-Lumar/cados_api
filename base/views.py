@@ -4,8 +4,10 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.db.models import Q
 
-from .models import Advocate
-from .serializers import AdvocateSerializer
+from rest_framework.views import APIView
+
+from .models import Advocate, Company
+from .serializers import AdvocateSerializer, CompanySerializer
 
 
 # Create your views here.
@@ -47,23 +49,56 @@ def advocate_list(request):
         
         return Response(serializer.data)
     
-@api_view(['GET', 'PUT', 'DELETE'])
-def advocate_detail(request, username):
-    advocate = Advocate.objects.get(username=username)
+
+class AdvocateDetail(APIView):
     
-    if request.method == 'GET':
+    def get_object(self, username):
+        try:
+            return Advocate.objects.get(username=username)
+        except Advocate.DoesNotExist:
+            raise JsonResponse('Advocate doesnt exist!')
+        
+    def get(self, request, username):
+        advocate = self.objects.get(username)
         serializer = AdvocateSerializer(advocate, many=False)
         return Response(serializer.data)
     
-    if request.method == 'PUT':
+    def put(self, request, username):
+        advocate = self.objects.get(username)
         advocate.username = request.data['username']
         advocate.bio = request.data['bio']
-        
-        advocate.save()
-        
         serializer = AdvocateSerializer(advocate, many=False)
         return Response(serializer.data)
     
-    if request.method == 'DELETE':
+    def delete(self, request, username):
+        advocate = self.objects.get(username)
         advocate.delete()
         return Response('user was deleted!')
+        
+    
+# @api_view(['GET', 'PUT', 'DELETE'])
+# def advocate_detail(request, username):
+#     advocate = Advocate.objects.get(username=username)
+    
+#     if request.method == 'GET':
+#         serializer = AdvocateSerializer(advocate, many=False)
+#         return Response(serializer.data)
+    
+#     if request.method == 'PUT':
+#         advocate.username = request.data['username']
+#         advocate.bio = request.data['bio']
+        
+#         advocate.save()
+        
+#         serializer = AdvocateSerializer(advocate, many=False)
+#         return Response(serializer.data)
+    
+#     if request.method == 'DELETE':
+#         advocate.delete()
+#         return Response('user was deleted!')
+
+@api_view(['GET'])
+def companies_list(request):
+    companies = Company.objects.all()
+    serializer = CompanySerializer(companies, many=True)
+    return Response(serializer.data)
